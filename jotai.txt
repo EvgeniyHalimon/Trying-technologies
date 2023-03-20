@@ -1,0 +1,54 @@
+const readOnlyAtom = atom((get) => get(priceAtom) * 2)
+
+const writeOnlyAtom = atom(
+  null, // it's a convention to pass `null` for the first argument
+  (get, set, update) => {
+    // `update` is any single value we receive for updating this atom
+    set(priceAtom, get(priceAtom) - update.discount)
+  }
+)
+
+const readWriteAtom = atom(
+  (get) => get(priceAtom) * 2,
+  (get, set, newPrice) => {
+    set(priceAtom, newPrice / 2)
+    // you can set as many atoms as you want at the same time
+  }
+)
+
+get - в ридонли функции. Отслеживаются реактивные и читабельные зависимости.
+get - в райтонли функции. Также считывается значение атома, но не отслеживается. Кроме того оно не может читать неразрешенные (анресолвд) асинхронные значения в апи в1.
+*set* в функции записи — записует значение атома. Он вызовет функцию записи целевого атома.
+
+Примечание о создании атома в функции которая рендерится
+Конфиги Atom можно создавать где угодно, но важно ссылочное равенство. Их также можно создавать динамически. Для создания атома в функции которая рендерится требуется useMemo или useRef для получения стабильной ссылки. Если вы сомневаетесь в использовании useMemo или useRef для запоминания, используйте useMemo. В противном случае это может вызвать бесконечный цикл с useAtom.
+
+Signatures
+// primitive atom
+function atom<Value>(initialValue: Value): PrimitiveAtom<Value>
+
+// read-only atom
+function atom<Value>(read: (get: Getter) => Value | Promise<Value>): Atom<Value>
+
+// writable derived atom
+function atom<Value, Update>(
+  read: (get: Getter) => Value | Promise<Value>,
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): WritableAtom<Value, Update>
+
+// write-only derived atom
+function atom<Value, Update>(
+  read: Value,
+  write: (get: Getter, set: Setter, update: Update) => void | Promise<void>
+): WritableAtom<Value, Update>
+
+InitialValue: начальное значение, которое будет возвращать атом, пока его значение не будет изменено.
+
+read: функция, которая вызывается при каждом повторном рендеринге. Подпись чтения: (get) => Value | Promise<Value> и get — это функция, которая принимает конфигурацию атома и возвращает ее значение, хранящееся в Provider, как описано ниже. Зависимость отслеживается, поэтому, если get используется для атома хотя бы один раз, чтение будет переоцениваться при каждом изменении значения атома.
+
+write: функция, в основном используемая для изменения значений атомов, для лучшего описания; он вызывается всякий раз, когда мы вызываем второе значение возвращаемой пары useAtom, useAtom()[1].Значение по умолчанию этой функции в примитивном атоме изменит значение этого атома.
+The signature of write is (get, set, update) => void | Promise<void>. get похож на описанный выше, но не отслеживает зависимость. set — это функция, которая принимает конфигурацию атома и новое значение, которое затем обновляет значение атома в Provider. update — это произвольное значение, которое мы получаем от функции обновления, возвращаемой useAtom, описанной ниже.
+
+-----------------------
+
+Хук useAtom предназначен для чтения значения атома в состоянии. Состояние можно рассматривать как WeakMap конфигураций атомов и значений атомов.
