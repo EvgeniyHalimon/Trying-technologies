@@ -1,12 +1,14 @@
+import { Route, Routes } from 'react-router'
 import './App.css'
-import { TodoList } from './components'
+import { TodoList, Whales } from './components'
 
 function App() {
 
   return (
-    <>
-      <TodoList/>
-    </>
+    <Routes>
+      <Route path='/' element={<TodoList/>}/>
+      <Route path='/whales' element={<Whales/>}/>
+    </Routes>
   )
 }
 

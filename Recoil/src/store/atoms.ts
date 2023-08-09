@@ -11,7 +11,13 @@ const todoListFilterState = atom({
     default: 'Show All',
 });
 
+const currentWhaleIdState = atom({
+    key: 'CurrentWhaleIdState',
+    default: '',
+})
+
 export {
     todoListState,
-    todoListFilterState
+    todoListFilterState,
+    currentWhaleIdState
 }

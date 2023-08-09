@@ -1,5 +1,5 @@
-import { selector } from "recoil";
-import { todoListFilterState, todoListState } from "./atoms";
+import { selector, selectorFamily } from "recoil";
+import { currentWhaleIdState, todoListFilterState, todoListState } from "./atoms";
 
 const filteredTodoListState = selector({
     key: 'FilteredTodoList',
@@ -38,4 +38,40 @@ const todoListStatsState = selector({
     },
 });
 
-export { filteredTodoListState, todoListStatsState }
+const currentWhaleTypesQuery = selector({
+    key: 'CurrentWhaleTypesQuery',
+    get: async () => {
+        const response = await fetch('http://localhost:3001/whaleTypes',{
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+        
+        return await response.json()
+    }
+})
+
+const whaleInfoQuery = selectorFamily({
+    key: 'WhaleInfoQuery',
+    get: whaleId => async () => {
+        if (whaleId === '') return undefined
+        const url = 'http://localhost:3001/whales/' + String(whaleId)
+        const response = await fetch(url)
+        return await response.json()
+    }
+})
+
+const currentWhaleQuery = selector({
+    key: 'CurrentWhaleQuery',
+    get: ({ get }) =>
+        get(whaleInfoQuery(get(currentWhaleIdState)))
+})
+
+export {
+    filteredTodoListState,
+    todoListStatsState,
+    currentWhaleTypesQuery,
+    whaleInfoQuery,
+    currentWhaleQuery
+}
